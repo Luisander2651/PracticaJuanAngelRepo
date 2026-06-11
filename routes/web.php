@@ -1,0 +1,64 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/login', function () {
+    return view('pages.auth.login');
+})->name('login');
+
+Route::get('/register', function () {
+    return view('pages.auth.register');
+})->name('register');
+
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/logout', function () {
+        return view('pages.auth.logout');
+    })->name('logout.page');
+    
+    Route::get('/dashboard', function () {
+        return view('pages.dashboard');
+    })->name('dashboard');
+
+    Route::get('/expedientes-clinicos', function () {
+        $user = request()->user();
+        $roleName = strtolower((string) optional($user?->role)->name);
+
+        if (!in_array($roleName, ['administrador', 'asistente'], true)) {
+            abort(403, 'No autorizado.');
+        }
+
+        return view('pages.records.index');
+    })->name('records.index');
+
+    Route::get('/expedientes-clinicos/{patientId}', function (string $patientId) {
+        $user = request()->user();
+        $roleName = strtolower((string) optional($user?->role)->name);
+
+        if (!in_array($roleName, ['administrador', 'asistente'], true)) {
+            abort(403, 'No autorizado.');
+        }
+
+        return view('pages.records.index', [
+            'selectedPatientId' => $patientId,
+        ]);
+    })->name('records.show');
+});
+
+Route::middleware(['auth:sanctum', 'only.admin'])->group(function () {
+    Route::get('/usuarios', function () {
+        return view('pages.usuarios.index');
+    })->name('usuarios.index');
+
+    Route::get('/contenido', function () {
+        return view('pages.contenido.index');
+    })->name('contenido.index');
+
+    Route::get('/pacientes', function () {
+        return view('pages.patients.index');
+    })->name('patients.index');
+});
